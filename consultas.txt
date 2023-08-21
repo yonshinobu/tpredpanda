@@ -1,0 +1,58 @@
+docker compose up -d
+docker exec -it redpanda-0 rpk cluster info
+python3 -m venv env  
+source env/bin/activate 
+pip install --upgrade pip 
+pip install kafka-python
+pip install websocket-client
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
+
+pip3 install -U pip virtualenv
+
+# Presentación: El proyecto debe desarrollarse en los grupos previamente formados. El entregable debe incluir:
+# -Enlace a repositorio público de Github incluyendo:
+# •docker-compose.yml
+# •código fuente del consumer
+# •archivos .sql con las 4 consultas utilizadas para responder las preguntas de la sección anterior
+# -Una grabación de pantalla mostrando el sistema en funcionamiento y explicando brevemente los pasos que se siguieron para su implementación.
+
+# 1.1 crear stream 
+CREATE OR REPLACE STREAM trades_stream (p DOUBLE, s STRING, t NUMERIC, v DOUBLE) WITH (KAFKA_TOPIC='trades-orders',  KEY_FORMAT='KAFKA', PARTITIONS=2, VALUE_FORMAT='JSON');
+select * from trades_stream;
+
+# 1.2 crear tabla "contar simbolos"
+CREATE or replace TABLE contar_simbolos AS SELECT s, COUNT(s) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from contar_simbolos;
+
+# 1.3 crear tabla "promedio"
+CREATE TABLE promedio AS SELECT s, AVG(p) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from promedio EMIT CHANGES;
+
+# 2.1 select s,avg(p) from trades_stream group by s EMIT CHANGES;
+
+# 3.1 
+CREATE TABLE promedio_symbolos AS SELECT s, avg(p) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from promedio_symbolos EMIT CHANGES;
+
+# 3.2
+CREATE TABLE pro_count AS SELECT s, count(p) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from pro_count EMIT CHANGES;
+
+# 3.3
+CREATE TABLE pro_max AS SELECT s, max(p) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from pro_max EMIT CHANGES;
+
+# 3.4
+CREATE TABLE pro_min AS SELECT s, min(p) FROM trades_stream GROUP BY s EMIT CHANGES;
+select * from pro_min EMIT CHANGES;
+
+#/*PRUEBAS*/
+select * from trades_stream;
+select * from contar_simbolos;
+select * from promedio EMIT CHANGES;
+select s,avg(p) from trades_stream group by s;
+select * from promedio_symbolos;
+select * from pro_count;
+select * from pro_max;
+select * from pro_min;
